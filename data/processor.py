@@ -61,8 +61,9 @@ class DataProcessor:
 
         return True
 
-    @staticmethod
+    
     # *** MODIFICATION: Add risk_free_rate to the function signature ***
+    @staticmethod
     def process_and_analyze(raw_data: List[Dict], spot_price: float, expiry_date: str, risk_free_rate: float) -> pd.DataFrame:
         """Process raw options data and calculate Greeks"""
         if not raw_data:
