@@ -38,15 +38,17 @@ st.set_page_config(
 def main():
     st.title("🚀 Pro Options & Greeks Analyzer")
 
-    # Initialize session state
+    # --- Initialize session state variables ---
     if 'last_fetch_time' not in st.session_state:
         st.session_state.last_fetch_time = None
     if 'run_analysis' not in st.session_state:
         st.session_state.run_analysis = False
-    if 'theme' not in st.session_state:
-        st.session_state.theme = 'light'
+    if 'symbol_changed' not in st.session_state:
+        st.session_state.symbol_changed = True # True on first run to load default
     if 'chain_df' not in st.session_state:
         st.session_state.chain_df = pd.DataFrame()
+    if 'expiry_index' not in st.session_state:
+        st.session_state.expiry_index = 0 # Default to the first (nearest) expiry
 
     # Create sidebar and get configuration
     sidebar_config = create_sidebar()
@@ -82,18 +84,34 @@ def main():
     try:
         expiry_map = breeze_client.get_expiry_map(breeze, sidebar_config['symbol'])
         if not expiry_map:
-            st.error("Failed to fetch expiry dates. Please check your connection.")
+            st.error(f"No expiry dates found for '{sidebar_config['symbol']}'. Please check the symbol and try again.")
             return
     except BreezeAPIError as e:
         st.error(str(e))
         return
+    except Exception as e:
+        st.error(f"An unexpected error occurred while fetching expiry dates: {e}")
+        return
+        
+    # --- Smart Expiry Selection Logic ---
+    expiry_keys = list(expiry_map.keys())
 
-    # Expiry Selection
+    # If the symbol was just changed, reset the index to 0 to select the nearest expiry.
+    if st.session_state.symbol_changed:
+        st.session_state.expiry_index = 0
+        st.session_state.symbol_changed = False # Reset the flag until the next change
+
     col1, col2, col3 = st.columns([2, 2, 1])
     with col1:
-        # Use a key for the selectbox to prevent it from resetting on every run
-        selected_expiry = st.selectbox("📅 Select Expiry", list(expiry_map.keys()), key="selected_expiry")
-        st.session_state.selected_display_date = selected_expiry
+        # Use the stored index to set the default value of the selectbox
+        selected_expiry = st.selectbox(
+            "📅 Select Expiry",
+            expiry_keys,
+            index=st.session_state.expiry_index,
+            key='expiry_selector'
+        )
+        # Update the session state with the index of the user's current selection
+        st.session_state.expiry_index = expiry_keys.index(selected_expiry)
 
     with col2:
         if st.session_state.last_fetch_time:
@@ -104,50 +122,43 @@ def main():
         if st.button("🔄 Refresh Data", type="primary", use_container_width=True):
             st.session_state.run_analysis = True
 
-    # Fetch and analyze data
+    # --- Data Fetching and Processing ---
+    # Trigger analysis if the flag is set by the button OR the symbol change callback
     if st.session_state.run_analysis or sidebar_config['auto_refresh']:
         try:
             api_expiry_date = expiry_map[selected_expiry]
             raw_data, spot_price = breeze_client.get_options_chain_data_with_retry(
                 breeze, sidebar_config['symbol'], api_expiry_date
             )
-
             if raw_data and spot_price:
-                # Process data
                 data_processor = DataProcessor()
-                # *** MODIFICATION: Pass the risk_free_rate from the sidebar config ***
                 full_chain_df = data_processor.process_and_analyze(
                     raw_data, spot_price, selected_expiry, sidebar_config['risk_free_rate']
                 )
-                st.session_state.chain_df = full_chain_df # Store in session state for export
+                st.session_state.chain_df = full_chain_df
                 st.session_state.spot_price = spot_price
                 st.session_state.metrics = calculate_dashboard_metrics(full_chain_df, spot_price) if not full_chain_df.empty else {}
+                
+                # Track historical data only on successful fetch
+                DataProcessor.track_historical_data_efficient(
+                    sidebar_config['symbol'], selected_expiry, st.session_state.metrics
+                )
+            else:
+                st.session_state.chain_df = pd.DataFrame() # Clear old data on failed fetch
 
-
-        except BreezeAPIError as e:
-            st.error(str(e))
-            logger.error(f"API Error: {e}")
-            st.session_state.chain_df = pd.DataFrame()
         except Exception as e:
-            st.error(f"An unexpected error occurred: {e}")
-            logger.error(f"Unexpected error: {e}", exc_info=True)
+            st.error(f"An error occurred during data analysis: {e}")
+            logger.error(f"Analysis error: {e}", exc_info=True)
             st.session_state.chain_df = pd.DataFrame()
         finally:
-            st.session_state.run_analysis = False
+            st.session_state.run_analysis = False # Reset the flag after running
 
-
-    # Display content if data is available in session state
+    # --- Display Content ---
     if not st.session_state.chain_df.empty:
         full_chain_df = st.session_state.chain_df
         spot_price = st.session_state.spot_price
         metrics = st.session_state.metrics
         atm_strike = full_chain_df.iloc[(full_chain_df['Strike'] - spot_price).abs().argsort()[:1]]['Strike'].values[0]
-
-        # Track historical data
-        if st.session_state.get('run_analysis', False) or sidebar_config['auto_refresh']:
-             DataProcessor.track_historical_data_efficient(
-                sidebar_config['symbol'], selected_expiry, metrics
-            )
 
         # Display Key Metrics
         st.subheader("📊 Key Metrics Dashboard")
@@ -184,7 +195,7 @@ def main():
         )
 
         # Options Chain Table
-        filtered_df = display_options_chain_table(full_chain_df, spot_price, sidebar_config['symbol'])
+        display_options_chain_table(full_chain_df, spot_price, sidebar_config['symbol'])
 
         # Export functionality in sidebar
         with st.sidebar:
@@ -193,9 +204,7 @@ def main():
             
             export_df = prepare_export_data(full_chain_df, export_format)
             file_data = None
-            mime_type = None
-            file_ext = None
-
+            
             if export_format == "JSON":
                 export_data_dict = {
                     'metadata': {
@@ -208,13 +217,13 @@ def main():
                     'chain_data': export_df.to_dict('records')
                 }
                 file_data = json.dumps(export_data_dict, indent=2, default=str)
-                mime_type = "application/json"
-                file_ext = "json"
+                mime_type="application/json"
+                file_ext="json"
             
             elif export_format == "CSV":
                 file_data = export_df.to_csv(index=False)
-                mime_type = "text/csv"
-                file_ext = "csv"
+                mime_type="text/csv"
+                file_ext="csv"
             
             elif export_format == "Excel":
                 output = BytesIO()
@@ -226,8 +235,8 @@ def main():
                             writer, sheet_name='Historical', index=False
                         )
                 file_data = output.getvalue()
-                mime_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                file_ext = "xlsx"
+                mime_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                file_ext="xlsx"
 
             if file_data:
                 st.download_button(
@@ -238,8 +247,9 @@ def main():
                     use_container_width=True,
                     key="download_button"
                 )
+
     elif not st.session_state.run_analysis:
-        st.info("👆 Click 'Refresh Data' to load the options chain")
+        st.info("👆 Enter a symbol and press Enter, or click 'Refresh Data' to load the options chain.")
 
     # Footer
     st.markdown("---")
