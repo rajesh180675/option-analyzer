@@ -7,3 +7,4 @@ python-dotenv
 scipy
 streamlit-autorefresh
 xlsxwriter
+matplotlib
