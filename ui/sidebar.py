@@ -1,5 +1,5 @@
 import streamlit as st
-from config import config
+from app_config import config
 from utils.helpers import load_credentials
 
 def create_sidebar():
