@@ -2,7 +2,7 @@ streamlit
 pandas>=2.0.0
 numpy>=1.24.0
 plotly>=5.14.0
-breeze-connect
+breeze-connect==2.1.0
 python-dotenv>=1.0.0
 scipy>=1.10.0
 streamlit-autorefresh>=0.0.1
