@@ -5,7 +5,7 @@ import logging
 import time
 from datetime import datetime
 from models import BreezeAPIError
-from config import config
+from app_config import config
 
 logger = logging.getLogger(__name__)
 
