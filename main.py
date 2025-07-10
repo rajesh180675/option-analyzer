@@ -14,7 +14,7 @@ from models import BreezeAPIError
 from api.breeze_client import BreezeClient
 from data.processor import DataProcessor
 from calculations import calculate_dashboard_metrics
-from visualization import display_sentiment_gauge
+from visualization.charts import display_sentiment_gauge
 from visualization.tables import display_options_chain_table
 from ui import create_sidebar, create_analysis_tabs
 from utils import prepare_export_data
