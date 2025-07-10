@@ -63,7 +63,7 @@ class DataProcessor:
         return True
 
     @staticmethod
-    # *** FIX: Added risk_free_rate to the function signature to match the call in main.py ***
+    # *** FIX 1: Updated the function signature to accept the 'risk_free_rate' argument. ***
     def process_and_analyze(raw_data: List[Dict], spot_price: float, expiry_date: str, risk_free_rate: float) -> pd.DataFrame:
         """Process raw options data and calculate Greeks"""
         if not raw_data:
@@ -99,13 +99,13 @@ class DataProcessor:
         if t > 0:
             # Vectorized IV calculation
             chain['Call IV'] = chain.apply(
-                # Pass risk_free_rate to calculate_iv
+                # *** FIX 2: Pass the 'risk_free_rate' parameter to the IV calculation function. ***
                 lambda row: calculate_iv('Call', spot_price, row['strike_price'],
                                        row['ltp_call'], t, r=risk_free_rate) * 100 if row['ltp_call'] > 0 else 0,
                 axis=1
             )
             chain['Put IV'] = chain.apply(
-                # Pass risk_free_rate to calculate_iv
+                # *** FIX 2: Pass the 'risk_free_rate' parameter to the IV calculation function. ***
                 lambda row: calculate_iv('Put', spot_price, row['strike_price'],
                                        row['ltp_put'], t, r=risk_free_rate) * 100 if row['ltp_put'] > 0 else 0,
                 axis=1
@@ -116,7 +116,7 @@ class DataProcessor:
             call_ivs = chain['Call IV'].values / 100
             put_ivs = chain['Put IV'].values / 100
 
-            # Pass risk_free_rate to calculate_greeks_vectorized
+            # *** FIX 3: Pass the 'risk_free_rate' parameter to the Greeks calculation function. ***
             call_greeks = calculate_greeks_vectorized(call_ivs, 'Call', spot_price, strikes, t, r=risk_free_rate)
             put_greeks = calculate_greeks_vectorized(put_ivs, 'Put', spot_price, strikes, t, r=risk_free_rate)
 
