@@ -131,7 +131,7 @@ class DataProcessor:
     @staticmethod
     def track_historical_data_efficient(symbol: str, expiry: str, metrics: Dict[str, Any]) -> None:
         """Efficient historical data tracking with compression"""
-        from config import config
+        from app_config import config
         
         if 'historical_data' not in st.session_state:
             st.session_state.historical_data = pd.DataFrame()
