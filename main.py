@@ -82,7 +82,7 @@ def main():
     try:
         expiry_map = breeze_client.get_expiry_map(breeze, sidebar_config['symbol'])
         if not expiry_map:
-            st.error("Failed to fetch expiry dates. Please check your connection.")
+            st.error("Failed to fetch expiry dates. Please check your connection or symbol.")
             return
     except BreezeAPIError as e:
         st.error(str(e))
@@ -115,14 +115,13 @@ def main():
             if raw_data and spot_price:
                 # Process data
                 data_processor = DataProcessor()
-                # *** MODIFICATION: Pass the risk_free_rate from the sidebar config ***
+                # Pass the risk_free_rate from the sidebar config to the processing function
                 full_chain_df = data_processor.process_and_analyze(
                     raw_data, spot_price, selected_expiry, sidebar_config['risk_free_rate']
                 )
                 st.session_state.chain_df = full_chain_df # Store in session state for export
                 st.session_state.spot_price = spot_price
                 st.session_state.metrics = calculate_dashboard_metrics(full_chain_df, spot_price) if not full_chain_df.empty else {}
-
 
         except BreezeAPIError as e:
             st.error(str(e))
