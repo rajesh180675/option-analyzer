@@ -119,7 +119,7 @@ def main():
                     atm_strike = full_chain_df.iloc[(full_chain_df['Strike'] - spot_price).abs().argsort()[:1]]['Strike'].values[0]
                     
                     # Track historical data
-                     data_processor.track_historical_data_efficient(
+                    data_processor.track_historical_data_efficient(
                         sidebar_config['symbol'], selected_expiry, metrics
                     )
                     
