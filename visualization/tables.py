@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from config import config
+from app_config import config
 
 def display_options_chain_table(full_chain_df: pd.DataFrame, spot_price: float, symbol: str):
     """Display the options chain table with filters"""
