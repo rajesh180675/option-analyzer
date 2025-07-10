@@ -91,7 +91,8 @@ def main():
     # Expiry Selection
     col1, col2, col3 = st.columns([2, 2, 1])
     with col1:
-        selected_expiry = st.selectbox("📅 Select Expiry", list(expiry_map.keys()))
+        # Use a key for the selectbox to prevent it from resetting on every run
+        selected_expiry = st.selectbox("📅 Select Expiry", list(expiry_map.keys()), key="selected_expiry")
         st.session_state.selected_display_date = selected_expiry
 
     with col2:
@@ -114,7 +115,10 @@ def main():
             if raw_data and spot_price:
                 # Process data
                 data_processor = DataProcessor()
-                full_chain_df = data_processor.process_and_analyze(raw_data, spot_price, selected_expiry)
+                # *** MODIFICATION: Pass the risk_free_rate from the sidebar config ***
+                full_chain_df = data_processor.process_and_analyze(
+                    raw_data, spot_price, selected_expiry, sidebar_config['risk_free_rate']
+                )
                 st.session_state.chain_df = full_chain_df # Store in session state for export
                 st.session_state.spot_price = spot_price
                 st.session_state.metrics = calculate_dashboard_metrics(full_chain_df, spot_price) if not full_chain_df.empty else {}
@@ -139,9 +143,9 @@ def main():
         metrics = st.session_state.metrics
         atm_strike = full_chain_df.iloc[(full_chain_df['Strike'] - spot_price).abs().argsort()[:1]]['Strike'].values[0]
 
-        # Track historical data (only when new data is successfully fetched)
+        # Track historical data
         if st.session_state.get('run_analysis', False) or sidebar_config['auto_refresh']:
-             data_processor.track_historical_data_efficient(
+             DataProcessor.track_historical_data_efficient(
                 sidebar_config['symbol'], selected_expiry, metrics
             )
 
@@ -163,7 +167,7 @@ def main():
             sentiment_text = "Bullish" if metrics['sentiment'] > 20 else "Bearish" if metrics['sentiment'] < -20 else "Neutral"
             st.metric("Sentiment", sentiment_text, f"{metrics['sentiment']:.0f}")
 
-        # Sentiment Gauge
+        # Sentiment Gauge & Info
         col1, col2 = st.columns([1, 2])
         with col1:
             st.plotly_chart(display_sentiment_gauge(metrics['sentiment']), use_container_width=True)
@@ -185,7 +189,7 @@ def main():
         # Export functionality in sidebar
         with st.sidebar:
             st.subheader("💾 Export Data")
-            export_format = st.selectbox("Export Format", ["Excel", "CSV", "JSON"])
+            export_format = st.selectbox("Export Format", ["Excel", "CSV", "JSON"], key="export_format")
             
             export_df = prepare_export_data(full_chain_df, export_format)
             file_data = None
@@ -231,7 +235,8 @@ def main():
                     data=file_data,
                     file_name=f"{sidebar_config['symbol']}_options_{datetime.now().strftime('%Y%m%d_%H%M%S')}.{file_ext}",
                     mime=mime_type,
-                    use_container_width=True
+                    use_container_width=True,
+                    key="download_button"
                 )
     elif not st.session_state.run_analysis:
         st.info("👆 Click 'Refresh Data' to load the options chain")
