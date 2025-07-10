@@ -11,8 +11,8 @@ warnings.filterwarnings('ignore')
 # Import modules
 from config import config
 from models import BreezeAPIError
-from api import BreezeClient
-from data import DataProcessor
+from api.breeze_client import BreezeClient
+from data.processor import DataProcessor
 from calculations import calculate_dashboard_metrics
 from visualization import display_sentiment_gauge
 from visualization.tables import display_options_chain_table
