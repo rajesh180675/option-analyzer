@@ -2,12 +2,6 @@ import streamlit as st
 from app_config import config
 from utils.helpers import load_credentials
 
-# This callback function is triggered whenever the user changes the symbol
-def handle_symbol_change():
-    """Sets flags to indicate the symbol has changed and an analysis should run."""
-    st.session_state.symbol_changed = True
-    st.session_state.run_analysis = True
-
 def create_sidebar():
     """Create and configure the sidebar"""
     with st.sidebar:
@@ -19,22 +13,19 @@ def create_sidebar():
             session_token = st.text_input("Session Token", type="password",
                                         help="Get from https://api.icicidirect.com/apiuser/login")
 
-        # Symbol Selection with on_change callback
+        # --- MODIFICATION: Changed symbol selection to a text input ---
         st.subheader("📊 Symbol Selection")
+        # Provide the list of indices as a helper/suggestion
         st.info("Common Indices: " + ", ".join(config.SYMBOLS))
         
         symbol_input = st.text_input(
-            "Enter Symbol (e.g., NIFTY, RELIANCE, ITC)",
-            value=st.session_state.get('symbol_input_value', 'NIFTY'), # Persist value across runs
-            help="Enter any F&O symbol and press Enter to load data.",
-            on_change=handle_symbol_change, # *** THIS IS THE KEY CHANGE ***
-            key='symbol_input' # A key is needed for on_change to work reliably
+            "Enter Symbol (e.g., NIFTY, RELIANCE, TCS)",
+            value="NIFTY", # Default value
+            help="Enter any valid NSE stock or index symbol. The tool works best with F&O instruments."
         )
-        # Store the current input value in session state
-        st.session_state.symbol_input_value = symbol_input
-        
         # Ensure the symbol is uppercase and stripped of whitespace for API consistency
         symbol = symbol_input.upper().strip()
+        # --- End of Modification ---
 
         # Auto-refresh Settings
         st.subheader("🔄 Auto-Refresh")
@@ -66,4 +57,5 @@ def create_sidebar():
         'show_volume': show_volume,
         'show_strategy': show_strategy,
         'risk_free_rate': risk_free_rate,
+        # 'export_format' is now handled inside main.py with its own selectbox
     }
