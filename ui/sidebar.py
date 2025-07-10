@@ -13,7 +13,7 @@ def create_sidebar():
             session_token = st.text_input("Session Token", type="password",
                                         help="Get from https://api.icicidirect.com/apiuser/login")
 
-        # --- MODIFICATION: Changed symbol selection to a text input ---
+        # Symbol Selection
         st.subheader("📊 Symbol Selection")
         # Provide the list of indices as a helper/suggestion
         st.info("Common Indices: " + ", ".join(config.SYMBOLS))
@@ -25,7 +25,6 @@ def create_sidebar():
         )
         # Ensure the symbol is uppercase and stripped of whitespace for API consistency
         symbol = symbol_input.upper().strip()
-        # --- End of Modification ---
 
         # Auto-refresh Settings
         st.subheader("🔄 Auto-Refresh")
@@ -57,5 +56,4 @@ def create_sidebar():
         'show_volume': show_volume,
         'show_strategy': show_strategy,
         'risk_free_rate': risk_free_rate,
-        # 'export_format' is now handled inside main.py with its own selectbox
     }
