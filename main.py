@@ -16,7 +16,8 @@ from data.processor import DataProcessor
 from calculations.metrics import calculate_dashboard_metrics
 from visualization.charts import display_sentiment_gauge
 from visualization.tables import display_options_chain_table
-from ui.sidebar import create_sidebar, create_analysis_tabs
+from ui.sidebar import create_sidebar
+from ui.tabs import create_analysis_tabs
 from utils import prepare_export_data
 
 # --- LOGGING SETUP ---
