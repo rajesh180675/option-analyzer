@@ -18,7 +18,7 @@ from visualization.charts import display_sentiment_gauge
 from visualization.tables import display_options_chain_table
 from ui.sidebar import create_sidebar
 from ui.tabs import create_analysis_tabs
-from utils import prepare_export_data
+from utils.export import prepare_export_data
 
 # --- LOGGING SETUP ---
 logging.basicConfig(
