@@ -45,4 +45,10 @@ def create_sidebar():
         'symbol': symbol,
         'auto_refresh': auto_refresh,
         'refresh_interval': refresh_interval,
-        'show_greeks': show_greeks
+        'show_greeks': show_greeks,
+        'show_iv_smile': show_iv_smile,
+        'show_volume': show_volume,
+        'show_strategy': show_strategy,
+        'risk_free_rate': risk_free_rate,
+        'export_format': export_format
+    }
