@@ -13,7 +13,7 @@ class AppConfig:
     
     def __post_init__(self):
         if self.SYMBOLS is None:
-            self.SYMBOLS = ["NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY", "SENSEX"]
+            self.SYMBOLS = ["NIFTY", "CNXBAN", "NIFFIN", "MIDCPNIFTY", "BSESEN"]
         if self.STRIKE_STEPS is None:
             self.STRIKE_STEPS = {
                 "BANKNIFTY": 100, 
