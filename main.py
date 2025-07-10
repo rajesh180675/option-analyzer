@@ -9,7 +9,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Import modules
-from config import config
+from app_config import config
 from models import BreezeAPIError
 from api.breeze_client import BreezeClient
 from data.processor import DataProcessor
